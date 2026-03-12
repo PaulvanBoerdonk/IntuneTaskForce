@@ -21,24 +21,34 @@ jobs:
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 
           # 1. Temporarily add our local Modules folder to PSModulePath 
-          # This allows Test-ModuleManifest to find sibling modules that aren't published yet
           $localModulesPath = (Resolve-Path "./Modules").Path
           $env:PSModulePath = "$localModulesPath$([System.IO.Path]::PathSeparator)$env:PSModulePath"
 
           # 2. Find all module manifests (.psd1 files)
           $allManifests = Get-ChildItem -Path ./Modules -Filter "*.psd1" -Recurse
 
-          # 3. Split them: First the sub-modules, then the main module
-          $subModules = $allManifests | Where-Object { $_.BaseName -ne "IntuneTaskForce" }
-          $mainModule = $allManifests | Where-Object { $_.BaseName -eq "IntuneTaskForce" }
+          # 3. Explicitly define the correct dependency order!
+          # Authentication MUST be first. The main wrapper MUST be last.
+          $publishOrder = @(
+              "IntuneTaskForce.Authentication",
+              "IntuneTaskForce.Autopilot",
+              "IntuneTaskForce.BulkActions",
+              "IntuneTaskForce.DeviceManagement",
+              "IntuneTaskForce.Security",
+              "IntuneTaskForce"
+          )
 
-          # Merge them in the correct order (main module last)
-          $publishQueue = @($subModules) + @($mainModule)
+          Write-Host "Found $($allManifests.Count) manifests. Processing in strict dependency order..."
 
-          Write-Host "Found modules to evaluate: $($publishQueue.Count)"
+          foreach ($moduleName in $publishOrder) {
+              # Find the specific manifest for the module we want to process now
+              $manifest = $allManifests | Where-Object { $_.BaseName -eq $moduleName } | Select-Object -First 1
 
-          foreach ($manifest in $publishQueue) {
-              $moduleName = $manifest.BaseName
+              if (-not $manifest) {
+                  Write-Warning "Manifest for $moduleName not found. Skipping."
+                  continue
+              }
+
               $moduleFolder = $manifest.Directory.FullName
               
               Write-Host "`n================================================="
@@ -73,8 +83,30 @@ jobs:
                       Publish-Module -Path $moduleFolder -NuGetApiKey $env:NUGET_API_KEY -ErrorAction Stop
                       Write-Host "✅ Successfully published!"
                       
-                      # Small pause to give PSGallery time to process the newly uploaded module
-                      Start-Sleep -Seconds 15 
+                      # 4. Smart Wait Loop
+                      # We must wait for the PSGallery to index this module so that 
+                      # subsequent modules don't fail their dependency checks.
+                      Write-Host "⏳ Waiting for PSGallery to index $moduleName..."
+                      $maxRetries = 10
+                      $retryCount = 0
+                      $isIndexed = $false
+                      
+                      while ($retryCount -lt $maxRetries) {
+                          Start-Sleep -Seconds 20
+                          $check = Find-Module -Name $moduleName -ErrorAction SilentlyContinue
+                          
+                          if ($check -and $check.Version -ge $localVersion) {
+                              Write-Host "✅ Successfully indexed by PSGallery!"
+                              $isIndexed = $true
+                              break
+                          }
+                          $retryCount++
+                          Write-Host "Still waiting for indexing... ($retryCount/$maxRetries)"
+                      }
+                      
+                      if (-not $isIndexed) {
+                          Write-Warning "Gallery indexing is taking a long time. Continuing anyway, but dependencies might fail."
+                      }
                   }
                   catch {
                       Write-Error "Error publishing ${moduleName}: $_"
