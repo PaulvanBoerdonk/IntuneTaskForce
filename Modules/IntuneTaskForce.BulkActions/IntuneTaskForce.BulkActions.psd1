@@ -9,16 +9,16 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    # RootModule = ''
+    RootModule        = 'IntuneTaskForce.BulkActions.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '0.0.7'
+    ModuleVersion     = '0.1.0'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
 
     # ID used to uniquely identify this module
-    GUID              = '6984bc9a-9f1f-40e0-a3e4-5f016803e5ee'
+    GUID              = 'c2af98b4-c67e-4dce-a250-2eb73df504c6'
 
     # Author of this module
     Author            = 'Paul van Boerdonk'
@@ -30,7 +30,7 @@
     Copyright         = '(c) Paul van Boerdonk. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'Umbrella module for all IntuneTaskForce sub-modules'
+    Description       = 'A toolkit for Intune bulk actions, administrative and operational tasks'
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
@@ -52,13 +52,10 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @(
-        'Microsoft.Graph.Authentication',
+        'IntuneTaskForce.Authentication',
         'Microsoft.Graph.DeviceManagement',
-        'Microsoft.Graph.DeviceManagement.Enrollment',
-        'Microsoft.Graph.Identity.DirectoryManagement',
-        'Microsoft.Graph.Identity.SignIns',
         'Microsoft.Graph.Groups'
-    )
+    ) 
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
@@ -73,13 +70,7 @@
     # FormatsToProcess = @()
 
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-    NestedModules     = @(
-        '.\IntuneTaskForce.Authentication\IntuneTaskForce.Authentication.psm1',
-        '.\IntuneTaskForce.BulkActions\IntuneTaskForce.BulkActions.psm1',
-        '.\IntuneTaskForce.Autopilot\IntuneTaskForce.Autopilot.psm1',
-        '.\IntuneTaskForce.DeviceManagement\IntuneTaskForce.DeviceManagement.psm1',
-        '.\IntuneTaskForce.Security\IntuneTaskForce.Security.psm1'
-    )
+    # NestedModules = @()
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = '*'
@@ -91,7 +82,7 @@
     VariablesToExport = '*'
 
     # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-    AliasesToExport   = @()
+    AliasesToExport   = '*'
 
     # DSC resources to export from this module
     # DscResourcesToExport = @()

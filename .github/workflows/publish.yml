@@ -1,7 +1,5 @@
 name: Publish IntuneTaskForce Modules
 
-# Trigger this action on pushes to the 'main' branch,
-# but only if a .psd1 file is modified anywhere in the project.
 on:
   push:
     branches: [main]
@@ -15,47 +13,67 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Publish to PowerShell Gallery
+      - name: Publish Modules to PowerShell Gallery
         env:
           NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
         shell: pwsh
         run: |
-          $module = "IntuneTaskForce"
-
-          Write-Host "`n================================================="
-          Write-Host "Checking module: $module"
-          Write-Host "================================================="
-
-          # The path to the .psd1 file for the module.
-          $manifestPath = "./$module/$module.psd1"
-
-          # 1. Read the local version from the .psd1 file
-          $localModule = Test-ModuleManifest -Path $manifestPath -ErrorAction Stop
-          $localVersion = $localModule.Version
-          Write-Host "Local version in Git: $localVersion"
-
-          # 2. Voorkom prompts
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 
-          # 3. Check the online version of the module
-          $onlineModule = Find-Module -Name $module -ErrorAction SilentlyContinue
-          $shouldPublish = $false
+          # 1. Find all module manifests (.psd1 files)
+          $allManifests = Get-ChildItem -Path ./Modules -Filter "*.psd1" -Recurse
 
-          if ($null -eq $onlineModule) {
-              Write-Host "Module does not exist online yet. Preparing for initial publish..."
-              $shouldPublish = $true
-          }
-          elseif ($localVersion -gt $onlineModule.Version) {
-              Write-Host "New version found! (Online: $($onlineModule.Version) -> Local: $localVersion)"
-              $shouldPublish = $true
-          }
-          else {
-              Write-Host "Skipping: Local version ($localVersion) is not newer than the online version ($($onlineModule.Version))."
-          }
+          # 2. Split them: First the sub-modules, then the main module
+          $subModules = $allManifests | Where-Object { $_.BaseName -ne "IntuneTaskForce" }
+          $mainModule = $allManifests | Where-Object { $_.BaseName -eq "IntuneTaskForce" }
 
-          # 4. Publish the module if needed
-          if ($shouldPublish) {
-              Write-Host "Publishing $module to the PowerShell Gallery..."
-              Publish-Module -Path "./$module" -NuGetApiKey $env:NUGET_API_KEY
-              Write-Host "✅ Successfully published!"
+          # Merge them in the correct order (main module last)
+          $publishQueue = @($subModules) + @($mainModule)
+
+          Write-Host "Found modules to evaluate: $($publishQueue.Count)"
+
+          foreach ($manifest in $publishQueue) {
+              $moduleName = $manifest.BaseName
+              $moduleFolder = $manifest.Directory.FullName
+              
+              Write-Host "`n================================================="
+              Write-Host "Evaluating module: $moduleName"
+              Write-Host "================================================="
+
+              # Read local version
+              $localModule = Test-ModuleManifest -Path $manifest.FullName -ErrorAction Stop
+              $localVersion = $localModule.Version
+              Write-Host "Local version in Git: $localVersion"
+
+              # Check online version
+              $onlineModule = Find-Module -Name $moduleName -ErrorAction SilentlyContinue
+              $shouldPublish = $false
+
+              if ($null -eq $onlineModule) {
+                  Write-Host "Module does not exist online yet. Preparing for initial publish..."
+                  $shouldPublish = $true
+              }
+              elseif ($localVersion -gt $onlineModule.Version) {
+                  Write-Host "New version found! (Online: $($onlineModule.Version) -> Local: $localVersion)"
+                  $shouldPublish = $true
+              }
+              else {
+                  Write-Host "Skipping: Local version ($localVersion) is not newer than online version ($($onlineModule.Version))."
+              }
+
+              # Publish if needed
+              if ($shouldPublish) {
+                  Write-Host "Publishing $moduleName to the PowerShell Gallery..."
+                  try {
+                      Publish-Module -Path $moduleFolder -NuGetApiKey $env:NUGET_API_KEY -ErrorAction Stop
+                      Write-Host "✅ Successfully published!"
+                      
+                      # Small pause to give PSGallery time to process the newly uploaded module
+                      Start-Sleep -Seconds 15 
+                  }
+                  catch {
+                      Write-Error "Error publishing $moduleName: $_"
+                      throw $_
+                  }
+              }
           }
