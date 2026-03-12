@@ -1,0 +1,73 @@
+name: Publish IntuneTaskForce Modules
+
+# Trigger this action on pushes to the 'main' branch,
+# but only if a .psd1 file is modified anywhere in the project.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.psd1"
+
+jobs:
+  publish-to-gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Publish to PowerShell Gallery
+        env:
+          NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        shell: pwsh
+        run: |
+          # 1. Ensure modules can find each other locally during validation
+          $env:PSModulePath = "$((Get-Location).Path)$([IO.Path]::PathSeparator)$env:PSModulePath"
+
+          # 2. Specific publish order (Dependencies FIRST, then the umbrella)
+          $modules = @(
+              "IntuneTaskForce.Authentication",
+              "IntuneTaskForce.Autopilot",
+              "IntuneTaskForce.BulkActions",
+              "IntuneTaskForce.DeviceManagement",
+              "IntuneTaskForce"
+          )
+
+          # 3. Prevent prompts when interacting with the PSGallery
+          Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+
+          foreach ($module in $modules) {
+              Write-Host "`n================================================="
+              Write-Host "Checking module: $module"
+              Write-Host "================================================="
+              
+              $manifestPath = "./$module/$module.psd1"
+              
+              # Read the local module manifest and version
+              $localModule = Test-ModuleManifest -Path $manifestPath -ErrorAction Stop
+              $localVersion = $localModule.Version
+              Write-Host "Local version in Git: $localVersion"
+              
+              # Check if the module already exists in the online PowerShell Gallery
+              $onlineModule = Find-Module -Name $module -ErrorAction SilentlyContinue
+              
+              $shouldPublish = $false
+              
+              if ($null -eq $onlineModule) {
+                  Write-Host "Module does not exist online yet. Preparing for initial publish..."
+                  $shouldPublish = $true
+              }
+              elseif ($localVersion -gt $onlineModule.Version) {
+                  Write-Host "New version found! (Online: $($onlineModule.Version) -> Local: $localVersion)"
+                  $shouldPublish = $true
+              }
+              else {
+                  Write-Host "Skipping: Local version ($localVersion) is not newer than the online version ($($onlineModule.Version))."
+              }
+              
+              # Publish to the PowerShell Gallery
+              if ($shouldPublish) {
+                  Write-Host "Publishing $module to the PowerShell Gallery..."
+                  Publish-Module -Path "./$module" -NuGetApiKey $env:NUGET_API_KEY -Verbose
+                  Write-Host "✅ Successfully published!"
+              }
+          }
