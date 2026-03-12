@@ -20,42 +20,81 @@ jobs:
           NUGET_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
         shell: pwsh
         run: |
-          $module = "IntuneTaskForce"
+          $umbrellaModule = "IntuneTaskForce"
+          $manifestPath = "./$umbrellaModule/$umbrellaModule.psd1"
 
-          Write-Host "`n================================================="
-          Write-Host "Checking module: $module"
-          Write-Host "================================================="
+          Write-Host "::group::Project Analysis"
+          Write-Host "Project: $umbrellaModule"
+          Write-Host "Manifest path: $manifestPath"
 
-          # Het pad is nu simpelweg de map van je paraplu-module
-          $manifestPath = "./$module/$module.psd1"
+          if (-not (Test-Path $manifestPath)) {
+              Write-Error "Fatal: Umbrella module manifest not found at $manifestPath"
+              exit 1
+          }
 
-          # 1. Lees het lokale manifest
+          # 1. Analyze the Umbrella Module and nested submodules
           $localModule = Test-ModuleManifest -Path $manifestPath -ErrorAction Stop
           $localVersion = $localModule.Version
-          Write-Host "Local version in Git: $localVersion"
 
-          # 2. Voorkom prompts
+          Write-Host "Local Umbrella Module version: $localVersion"
+          Write-Host "Nested modules found in manifest:"
+          $localModule.NestedModules | ForEach-Object { Write-Host " - $_" }
+          Write-Host "::endgroup::"
+
+          # 2. Prepare Environment
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 
-          # 3. Check de online versie
-          $onlineModule = Find-Module -Name $module -ErrorAction SilentlyContinue
+          # 3. Version Check against PowerShell Gallery
+          Write-Host "::group::PowerShell Gallery Version Check"
+          $onlineModule = Find-Module -Name $umbrellaModule -ErrorAction SilentlyContinue
           $shouldPublish = $false
 
           if ($null -eq $onlineModule) {
-              Write-Host "Module does not exist online yet. Preparing for initial publish..."
+              Write-Host "Status: Module does not exist on PSGallery. Initial publish required." -ForegroundColor Cyan
               $shouldPublish = $true
+              $onlineVersionString = "Not Available"
           }
           elseif ($localVersion -gt $onlineModule.Version) {
-              Write-Host "New version found! (Online: $($onlineModule.Version) -> Local: $localVersion)"
+              Write-Host "Status: New version detected!" -ForegroundColor Green
+              Write-Host "Version delta: $($onlineModule.Version) (Online) -> $localVersion (Local)"
               $shouldPublish = $true
+              $onlineVersionString = $onlineModule.Version.ToString()
           }
           else {
-              Write-Host "Skipping: Local version ($localVersion) is not newer than the online version ($($onlineModule.Version))."
+              Write-Host "Status: No action required. Local version ($localVersion) is not newer than online ($($onlineModule.Version))." -ForegroundColor Yellow
+              $onlineVersionString = $onlineModule.Version.ToString()
+          }
+          Write-Host "::endgroup::"
+
+          # 4. Publish if version is updated
+          if ($shouldPublish) {
+              Write-Host "::group::Publishing to Gallery"
+              try {
+                  Write-Host "Uploading $umbrellaModule to the PowerShell Gallery..."
+                  Publish-Module -Path "./$umbrellaModule" -NuGetApiKey $env:NUGET_API_KEY -ErrorAction Stop
+                  $publishResult = " Success"
+                  Write-Host " Publication completed!" -ForegroundColor Green
+              }
+              catch {
+                  $publishResult = "❌ Failed"
+                  Write-Error "Error during publication: $($_.Exception.Message)"
+                  exit 1
+              }
+              Write-Host "::endgroup::"
+          }
+          else {
+              $publishResult = "⏭ Skipped"
           }
 
-          # 4. Publiceer het complete pakket
-          if ($shouldPublish) {
-              Write-Host "Publishing $module to the PowerShell Gallery..."
-              Publish-Module -Path "./$module" -NuGetApiKey $env:NUGET_API_KEY
-              Write-Host "✅ Successfully published!"
-          }
+          # 5. Generate GitHub Job Summary
+          $summary = @"
+          ### Deployment Report: $umbrellaModule
+          | Component | Status |
+          | --- | --- |
+          | **Local Version** | `$localVersion` |
+          | **Online Version** | `$onlineVersionString` |
+          | **Publish Action** | $publishResult |
+
+          **Trigger:** A push was detected with changes to module manifests (.psd1).
+          "@
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
