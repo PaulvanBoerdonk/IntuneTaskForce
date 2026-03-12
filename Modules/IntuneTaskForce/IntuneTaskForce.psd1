@@ -12,7 +12,7 @@
     # RootModule = ''
 
     # Version number of this module.
-    ModuleVersion     = '0.1.0'
+    ModuleVersion     = '0.1.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -52,11 +52,11 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @(
-        @{ModuleName = 'IntuneTaskForce.Authentication'; ModuleVersion = '0.1.0' },
-        @{ModuleName = 'IntuneTaskForce.BulkActions'; ModuleVersion = '0.1.0' },
-        @{ModuleName = 'IntuneTaskForce.Autopilot'; ModuleVersion = '0.1.0' },
-        @{ModuleName = 'IntuneTaskForce.DeviceManagement'; ModuleVersion = '0.1.0' },
-        @{ModuleName = 'IntuneTaskForce.Security'; ModuleVersion = '0.1.0' }
+        @{ModuleName = 'IntuneTaskForce.Authentication'; ModuleVersion = '0.1.1' },
+        @{ModuleName = 'IntuneTaskForce.BulkActions'; ModuleVersion = '0.1.1' },
+        @{ModuleName = 'IntuneTaskForce.Autopilot'; ModuleVersion = '0.1.1' },
+        @{ModuleName = 'IntuneTaskForce.DeviceManagement'; ModuleVersion = '0.1.1' },
+        @{ModuleName = 'IntuneTaskForce.Security'; ModuleVersion = '0.1.1' }
     )
 
     # Assemblies that must be loaded prior to importing this module

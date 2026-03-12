@@ -72,7 +72,8 @@ jobs:
                       Start-Sleep -Seconds 15 
                   }
                   catch {
-                      Write-Error "Error publishing $moduleName: $_"
+                      # FIXED: Wrapped moduleName in curly braces to detach it from the colon
+                      Write-Error "Error publishing ${moduleName}: $_"
                       throw $_
                   }
               }
