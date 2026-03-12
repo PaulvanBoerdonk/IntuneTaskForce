@@ -20,10 +20,15 @@ jobs:
         run: |
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
 
-          # 1. Find all module manifests (.psd1 files)
+          # 1. Temporarily add our local Modules folder to PSModulePath 
+          # This allows Test-ModuleManifest to find sibling modules that aren't published yet
+          $localModulesPath = (Resolve-Path "./Modules").Path
+          $env:PSModulePath = "$localModulesPath$([System.IO.Path]::PathSeparator)$env:PSModulePath"
+
+          # 2. Find all module manifests (.psd1 files)
           $allManifests = Get-ChildItem -Path ./Modules -Filter "*.psd1" -Recurse
 
-          # 2. Split them: First the sub-modules, then the main module
+          # 3. Split them: First the sub-modules, then the main module
           $subModules = $allManifests | Where-Object { $_.BaseName -ne "IntuneTaskForce" }
           $mainModule = $allManifests | Where-Object { $_.BaseName -eq "IntuneTaskForce" }
 
@@ -72,7 +77,6 @@ jobs:
                       Start-Sleep -Seconds 15 
                   }
                   catch {
-                      # FIXED: Wrapped moduleName in curly braces to detach it from the colon
                       Write-Error "Error publishing ${moduleName}: $_"
                       throw $_
                   }
