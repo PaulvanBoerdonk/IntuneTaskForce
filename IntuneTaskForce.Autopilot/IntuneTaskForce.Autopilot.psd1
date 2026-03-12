@@ -51,10 +51,11 @@
     # ProcessorArchitecture = ''
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules   = @('IntuneTaskForce.Authentication', 
+    RequiredModules   = @(
         'Microsoft.Graph.Authentication', 
         'Microsoft.Graph.DeviceManagement',
-        'Microsoft.Graph.DeviceManagement.Enrollment')
+        'Microsoft.Graph.DeviceManagement.Enrollment'
+    )
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()

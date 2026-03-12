@@ -52,7 +52,6 @@
 
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules   = @(
-        'IntuneTaskForce.Authentication',
         'Microsoft.Graph.Authentication',
         'Microsoft.Graph.DeviceManagement',
         'Microsoft.Graph.Groups'

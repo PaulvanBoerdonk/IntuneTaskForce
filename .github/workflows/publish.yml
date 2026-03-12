@@ -67,7 +67,7 @@ jobs:
               # Publish to the PowerShell Gallery
               if ($shouldPublish) {
                   Write-Host "Publishing $module to the PowerShell Gallery..."
-                  Publish-Module -Path "./$module" -NuGetApiKey $env:NUGET_API_KEY -Verbose
+                  Publish-Module -Path "./$module" -NuGetApiKey $env:NUGET_API_KEY
                   Write-Host "✅ Successfully published!"
               }
           }
