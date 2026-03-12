@@ -12,7 +12,7 @@
     # RootModule = ''
 
     # Version number of this module.
-    ModuleVersion     = '0.1.3'
+    ModuleVersion     = '0.1.4'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -72,13 +72,7 @@
     # FormatsToProcess = @()
 
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-    NestedModules     = @(
-        '.\IntuneTaskForce.Authentication\IntuneTaskForce.Authentication.psm1',
-        '.\IntuneTaskForce.BulkActions\IntuneTaskForce.BulkActions.psm1',
-        '.\IntuneTaskForce.Autopilot\IntuneTaskForce.Autopilot.psm1',
-        '.\IntuneTaskForce.DeviceManagement\IntuneTaskForce.DeviceManagement.psm1',
-        '.\IntuneTaskForce.Security\IntuneTaskForce.Security.psm1'
-    )
+    NestedModules     = @()
 
     # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
     FunctionsToExport = @()
