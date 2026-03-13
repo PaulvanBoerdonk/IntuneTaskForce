@@ -16,6 +16,20 @@ Import-Module IntuneTaskForce
 
 ---
 
+## Interactive Console (TUI)
+
+If you want to use the module without typing commands manually (ideal for Service Desk or Helpdesk teams), the umbrella module includes a built-in Text User Interface (TUI).
+
+### `Start-ITFConsole`
+
+Launches an interactive, menu-driven console that allows you to execute all major actions within this module securely and easily. Simply select the action you want to perform and follow the on-screen prompts.
+
+```powershell
+Start-ITFConsole
+```
+
+---
+
 ## 1. Authentication (Session Management)
 
 These commands are used to securely log in to the Microsoft Graph API. The module automatically handles the necessary Graph permissions (scopes) in the background.
@@ -104,6 +118,40 @@ Sync-ITFBulkDevice -DeviceNamePrefix "WIN-"
 
 # Sync all devices within a specific Entra ID group
 Sync-ITFBulkDevice -GroupName "Workstations-Device-Group"
+```
+
+---
+
+## 5. Security (LAPS & BitLocker)
+
+These commands manage device security features, including Windows LAPS local administrator passwords and BitLocker recovery keys.
+
+### `Get-ITFBitLockerKey`
+
+Queries Entra ID to retrieve all active BitLocker Recovery Keys associated with a specific device.
+
+```powershell
+Get-ITFBitLockerKey -DeviceName "WPS-12345"
+```
+
+### `Get-ITFDeviceLapsPassword`
+
+Retrieves the current Windows LAPS (Local Administrator Password Solution) credential for a given device from Entra ID. It also calculates the expiration date based on your Intune policy.
+
+```powershell
+# Get the active password (defaults to a 7-day expiration policy calculation)
+Get-ITFDeviceLapsPassword -DeviceName "WPS-12345"
+
+# Get the password and calculate expiration based on a 14-day policy
+Get-ITFDeviceLapsPassword -DeviceName "WPS-12345" -PasswordAgeDays 14
+```
+
+### `Reset-ITFDeviceLapsPassword`
+
+Sends a remote action command via the Microsoft Intune Graph API to force a specific managed device to rotate its LAPS password. The device will rotate its password during the next check-in.
+
+```powershell
+Reset-ITFDeviceLapsPassword -DeviceName "WPS-12345"
 ```
 
 ---
