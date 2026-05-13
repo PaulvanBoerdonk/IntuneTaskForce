@@ -56,7 +56,8 @@ function Clear-ITFDeviceOwner {
                             Write-Host "     Removing Intune Primary User: $($user.UserPrincipalName)" -ForegroundColor Yellow
                             
                             # Native SDK call to remove the user mapping reference
-                            Remove-MgDeviceManagementManagedDeviceUserByRef -ManagedDeviceId $intuneDevice.Id -UserId $user.Id -ErrorAction Stop
+                            $deleteUri = "https://graph.microsoft.com/v1.0/deviceManagement/managedDevices/$($intuneDevice.Id)/users/`$ref"
+                            Invoke-MgGraphRequest -Method DELETE -Uri $deleteUri -ErrorAction Stop                        
                         }
                     }
                     else {
@@ -106,7 +107,13 @@ function Clear-ITFDeviceOwner {
                     }
                 }
                 catch {
-                    Write-Warning "  -> Failed to remove Entra ID Owner: $($_.Exception.Message)"
+                    if ($_.Exception.Message -match "One or more removed object references do not exist") {
+                        Write-Host "     Entra ID Owner was already removed by Microsoft in the background. Everything is good!" -ForegroundColor Green
+                    }
+                    else {
+                        # Alle andere echte fouten worden nog wel getoond
+                        Write-Warning "  -> Failed to remove Entra ID Owner: $($_.Exception.Message)"
+                    }                
                 }
                 
                 Write-Host "  ✅ Ownership cleared for $($intuneDevice.DeviceName)!" -ForegroundColor Green

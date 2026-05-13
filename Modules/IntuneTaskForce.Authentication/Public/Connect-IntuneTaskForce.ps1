@@ -17,7 +17,8 @@ function Connect-IntuneTaskForce {
             "DeviceManagementServiceConfig.Read.All",
             "Device.ReadWrite.All",
             "BitLockerKey.Read.All",
-            "DeviceLocalCredential.Read.All"
+            "DeviceLocalCredential.Read.All",
+            "Directory.AccessAsUser.All"
         )
     )
 
