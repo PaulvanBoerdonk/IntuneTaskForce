@@ -55,7 +55,7 @@
         @{ModuleName = 'IntuneTaskForce.Authentication'; ModuleVersion = '0.2.1' },
         @{ModuleName = 'IntuneTaskForce.BulkActions'; ModuleVersion = '0.2.1' },
         @{ModuleName = 'IntuneTaskForce.Autopilot'; ModuleVersion = '0.2.1' },
-        @{ModuleName = 'IntuneTaskForce.DeviceManagement'; ModuleVersion = '0.2.1' },
+        @{ModuleName = 'IntuneTaskForce.DeviceManagement'; ModuleVersion = '0.2.2' },
         @{ModuleName = 'IntuneTaskForce.Autopatch'; ModuleVersion = '0.2.1' },
         @{ModuleName = 'IntuneTaskForce.Security'; ModuleVersion = '0.2.1' }
     )
