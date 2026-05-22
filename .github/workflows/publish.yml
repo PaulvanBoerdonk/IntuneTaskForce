@@ -35,6 +35,7 @@ jobs:
               "IntuneTaskForce.BulkActions",
               "IntuneTaskForce.DeviceManagement",
               "IntuneTaskForce.Security",
+              "IntuneTaskForce.Autopatch",
               "IntuneTaskForce"
           )
 

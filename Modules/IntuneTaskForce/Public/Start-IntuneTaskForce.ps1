@@ -91,6 +91,16 @@ function Start-IntuneTaskForce {
         Write-MenuItem "9" "Show Unique Autopilot Group Tags"
         Write-MenuItem "10" "Update Autopilot Group Tag (By Serial)"
         Write-MenuItem "11" "Replace Autopilot Group Tag (Bulk)"
+        Write-Host ""
+
+        Write-CategoryHeader "Dashboards and Reports"
+        Write-MenuItem "12" "Open the Device Dashboard"
+        Write-MenuItem "13" "Check Device Compliance Status"
+        Write-Host ""
+
+        Write-CategoryHeader "Microsoft Autopatch"
+        Write-MenuItem "14" "Check Autopatch Assignment and Update Status"
+        Write-Host ""
         
         Write-Host "`n -------------------------------------------------------------------" -ForegroundColor DarkGray
         Write-MenuItem "Q" "Quit Application"
@@ -261,6 +271,49 @@ function Start-IntuneTaskForce {
                         Write-Host " Applying changes..." -ForegroundColor Cyan
                         Set-ITFAutopilotGroupTag -TargetOldGroupTag $oldTag -NewGroupTag $newTag
                     }
+                }
+                Show-Pause
+            }
+            '12' {
+                Show-Header
+                Write-Host " * Device Dashboard" -ForegroundColor Cyan
+                Write-Host " Displays a complete overview of hardware, Intune, LAPS and BitLocker data.`n" -ForegroundColor DarkGray
+                
+                $dashboardDevice = Read-Host " > Enter the device name (or 'Q' to cancel)"
+                
+                if ($dashboardDevice -in 'Q', 'q') { continue }
+                
+                if (-not [string]::IsNullOrWhiteSpace($dashboardDevice)) { 
+                    Show-ITFDeviceDashboard -DeviceName $dashboardDevice
+                }
+                Show-Pause
+            }
+            '13' {
+                Show-Header
+                Write-Host " * Check Device Compliance Status" -ForegroundColor Cyan
+                Write-Host " Retrieves the specific compliance policies that are failing on a device.`n" -ForegroundColor DarkGray
+                
+                $compDevice = Read-Host " > Enter Device Name (or 'Q' to cancel)"
+                
+                if ($compDevice -in 'Q', 'q') { continue }
+                
+                Write-Host ""
+                if (-not [string]::IsNullOrWhiteSpace($compDevice)) { 
+                    Get-ITFDeviceComplianceState -DeviceName $compDevice | Format-Table -AutoSize
+                }
+                Show-Pause
+            }
+            '14' {
+                Show-Header
+                Write-Host " * Check Autopatch Assignment" -ForegroundColor Cyan
+                Write-Host " Retrieves OS patch levels and assigned Autopatch deployment rings.`n" -ForegroundColor DarkGray
+                
+                $patchDevice = Read-Host " > Enter Device Name (or 'Q' to cancel)"
+                
+                if ($patchDevice -in 'Q', 'q') { continue }
+                
+                if (-not [string]::IsNullOrWhiteSpace($patchDevice)) { 
+                    Get-ITFAutopatchDeviceStatus -DeviceName $patchDevice
                 }
                 Show-Pause
             }
