@@ -85,7 +85,7 @@ function Sync-ITFBulkDevice {
                 Write-Warning "Failed to sync device $($device.DeviceName). Error: $($_.Exception.Message)"
             }
 
-            Start-Sleep -Seconds 2
+            Start-Sleep -Milliseconds 150
             $counter++
         }
 
